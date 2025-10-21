@@ -103,6 +103,7 @@ class SudokuGame:
 
         self.current_board = [row[:] for row in self.initial]
         self.selected = None
+        self.hovered = None
         self.all_solved = False
     def is_solved(self):
         """check if current board == solved board"""
@@ -125,11 +126,28 @@ def draw_grid(screen, game, overlay_surface):
     if not game.all_solved:
         game.all_solved = game.is_solved()
 
+    temp_guide_surface = pygame.Surface((SUDOKU_GRID_SIZE, SUDOKU_GRID_SIZE), pygame.SRCALPHA)
+    
+    if game.hovered and not game.all_solved:
+        r, c = game.hovered
+        
+        # row highlight
+        row_rect = pygame.Rect(0, r * CELL_SIZE, SUDOKU_GRID_SIZE, CELL_SIZE)
+        pygame.draw.rect(temp_guide_surface, HOVER_LINE_COLOR + (100,), row_rect, 0)
+        
+        # column highlight
+        col_rect = pygame.Rect(c * CELL_SIZE, 0, CELL_SIZE, SUDOKU_GRID_SIZE)
+        pygame.draw.rect(temp_guide_surface, HOVER_LINE_COLOR + (100,), col_rect, 0)
+
     if game.all_solved:
         for r in range(9):
             for c in range(9):
                 reveal_cell(r, c, overlay_surface)
     screen.blit(overlay_surface, (0, 0))
+
+    screen.blit(temp_guide_surface, (0, 0))
+
+
     for r in range(9):
         for c in range(9):
             num = game.current_board[r][c]
