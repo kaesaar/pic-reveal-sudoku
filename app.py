@@ -25,11 +25,14 @@ LINE_COLOR = (0, 0, 0)
 NUM_COLOR = (50, 50, 50)
 USER_NUM_COLOR = (0, 0, 255)
 HIGHLIGHT_COLOR = (255, 255, 0)
+
+HOVER_LINE_COLOR = (180, 200, 255) # light blue
+SAME_NUM_HIGHLIGHT = (255, 200, 100) # yellow
+
 FONT = pygame.font.SysFont("arial", 40)
 
 WHITE = (255, 255, 255)
 OVERLAY_COLOR = (255, 255, 255)
-
 
 def process_image(file_path, target_size=SUDOKU_GRID_SIZE):
     try:
@@ -54,6 +57,7 @@ def reveal_cell(row, col, overlay_surface):
 
     transparent_hole = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
     transparent_hole.fill((0, 0, 0, 0))
+    
     rect_x = col * CELL_SIZE
     rect_y = row * CELL_SIZE
 
