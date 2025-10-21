@@ -156,6 +156,15 @@ def draw_grid(screen, game, overlay_surface):
     for r in range(9):
         for c in range(9):
             num = game.current_board[r][c]
+
+            if num != 0 and num == highlight_value and not game.all_solved:
+                rect_x = c * CELL_SIZE
+                rect_y = r * CELL_SIZE
+                same_num_surface = pygame.Surface((CELL_SIZE, CELL_SIZE))
+                same_num_surface.fill(SAME_NUM_HIGHLIGHT)
+                same_num_surface.set_alpha(150) # for better visibility
+                screen.blit(same_num_surface, (rect_x, rect_y))
+                
             if num != 0:
                 color = NUM_COLOR if game.initial[r][c] != 0 else USER_NUM_COLOR
 
