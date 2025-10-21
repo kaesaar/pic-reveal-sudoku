@@ -64,6 +64,7 @@ def reveal_cell(row, col, overlay_surface):
     overlay_surface.blit(transparent_hole, (rect_x, rect_y), special_flags=pygame.BLEND_RGBA_MULT)
 
 def rehide_cell(row, col, overlay_surface):
+    """re-cover a revealed cell by blitting a patch over it"""
     opaque_patch = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
     opaque_patch.fill(OVERLAY_COLOR + (240,))
 
@@ -72,6 +73,8 @@ def rehide_cell(row, col, overlay_surface):
 
     opaque_patch.set_alpha(240)
     overlay_surface.blit(opaque_patch, (rect_x, rect_y))
+
+
 class SudokuGame:
     def __init__(self):
         self.solved = [
