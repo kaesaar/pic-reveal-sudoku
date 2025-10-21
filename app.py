@@ -96,8 +96,15 @@ class SudokuGame:
 
         self.current_board = [row[:] for row in self.initial]
         self.selected = None
-
-
+        self.all_solved = False
+    def is_solved(self):
+        """check if current board == solved board"""
+        for r in range(9):
+            for c in range(9):
+                if self.current_board[r][c] != self.solved[r][c]:
+                    return False
+        return True
+    
 WIDTH = SUDOKU_GRID_SIZE
 HEIGHT = 600
 SCREEN_SIZE = (WIDTH, HEIGHT)
@@ -107,6 +114,14 @@ pygame.display.set_caption("Pic Sodoku")
 game = SudokuGame()
 
 def draw_grid(screen, game, overlay_surface):
+
+    if not game.all_solved:
+        game.all_solved = game.is_solved()
+
+    if game.all_solved:
+        for r in range(9):
+            for c in range(9):
+                reveal_cell(r, c, overlay_surface)
     screen.blit(overlay_surface, (0, 0))
     for r in range(9):
         for c in range(9):
@@ -156,6 +171,7 @@ if image_path:
 
         overlay_surface = pygame.Surface((SUDOKU_GRID_SIZE, SUDOKU_GRID_SIZE), pygame.SRCALPHA)
         overlay_surface.fill(OVERLAY_COLOR + (240,))
+
     else:
         running = False
 else:
@@ -166,6 +182,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+            
+        #stop input if solved
+        if game.all_solved:
+            continue
 
         # mouse
         if event.type == pygame.MOUSEBUTTONDOWN:
