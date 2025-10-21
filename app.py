@@ -147,6 +147,11 @@ def draw_grid(screen, game, overlay_surface):
 
     screen.blit(temp_guide_surface, (0, 0))
 
+    # selected number global highlighter
+    highlight_value = None
+    if game.selected:
+        r_sel, c_sel = game.selected
+        highlight_value = game.current_board[r_sel][c_sel]
 
     for r in range(9):
         for c in range(9):
