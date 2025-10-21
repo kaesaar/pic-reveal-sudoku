@@ -27,6 +27,10 @@ USER_NUM_COLOR = (0, 0, 255)
 HIGHLIGHT_COLOR = (255, 255, 0)
 FONT = pygame.font.SysFont("arial", 40)
 
+WHITE = (255, 255, 255)
+OVERLAY_COLOR = (255, 255, 255)
+
+
 def process_image(file_path, target_size=SUDOKU_GRID_SIZE):
     try:
         source_img = Image.open(file_path).convert("RGB")
@@ -55,6 +59,15 @@ def reveal_cell(row, col, overlay_surface):
 
     overlay_surface.blit(transparent_hole, (rect_x, rect_y), special_flags=pygame.BLEND_RGBA_MULT)
 
+def rehide_cell(row, col, overlay_surface):
+    opaque_patch = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
+    opaque_patch.fill(OVERLAY_COLOR + (240,))
+
+    rect_x = col * CELL_SIZE
+    rect_y = row * CELL_SIZE
+
+    opaque_patch.set_alpha(240)
+    overlay_surface.blit(opaque_patch, (rect_x, rect_y))
 class SudokuGame:
     def __init__(self):
         self.solved = [
@@ -129,11 +142,6 @@ def draw_grid(screen, game, overlay_surface):
         # vertical lines
         pygame.draw.line(screen, LINE_COLOR, (i * CELL_SIZE, 0), (i * CELL_SIZE, SUDOKU_GRID_SIZE), thickness)
 
-        pass
-
-WHITE = (255, 255, 255)
-OVERLAY_COLOR = (255, 255, 255)
-
 running = True
 
 sudoku_background_image = None
@@ -188,13 +196,13 @@ while running:
                     
                     if num_to_enter == game.solved[r][c]:
                         reveal_cell(r, c, overlay_surface)
+                    else:
+                        rehide_cell(r, c, overlay_surface)
 
                 elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_DELETE:
                     game.current_board[r][c] = 0
+                    rehide_cell(r, c, overlay_surface)
 
-    screen.fill(WHITE)
-
-    if sudoku_background_image and overlay_surface:
         screen.blit(sudoku_background_image, (0,0))
 
         draw_grid(screen, game, overlay_surface)
