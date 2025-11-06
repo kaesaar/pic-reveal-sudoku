@@ -1,12 +1,122 @@
 import tkinter
 from tkinter import filedialog
 import pygame
+import random
 import io
 import PIL
 from PIL import Image
 
 
 pygame.init()
+
+class SudokuGenerator:
+    def __init__(self):
+        self.grid = [[0] * 9 for _ in range(9)]
+
+    def is_safe(self, num, r, c):
+        """checks if placing 'num' at (r, c) is valid."""
+        
+        for i in range(9):
+            if self.grid[r][i] == num or self.grid[i][c] == num:
+                return False
+        
+        start_row, start_col = r - r % 3, c - c % 3
+        for i in range(3):
+            for j in range(3):
+                if self.grid[start_row + i][start_col + j] == num:
+                    return False
+        
+        return True
+    def is_safe_for_solver(self, board, num, r, c):
+        """checks if placing 'num' at (r, c) is valid for an external board (used by the solver)."""
+        
+        for i in range(9):
+            if board[r][i] == num or board[i][c] == num:
+                return False
+        
+        start_row, start_col = r - r % 3, c - c % 3
+        for i in range(3):
+            for j in range(3):
+                if board[start_row + i][start_col + j] == num:
+                    return False
+        
+        return True
+    
+    def fill_grid(self):
+        """fills the 9x9 grid with random numbers using backtracking."""
+        for r in range(9):
+            for c in range(9):
+                if self.grid[r][c] == 0:
+                    
+                    numbers = list(range(1, 10))
+                    random.shuffle(numbers)
+                    
+                    for num in numbers:
+                        if self.is_safe(num, r, c):
+                            self.grid[r][c] = num
+                            
+                            if self.fill_grid():
+                                return True
+                            
+                            self.grid[r][c] = 0
+                            
+                    return False
+        return True
+    
+    def count_solutions(self, board):
+        """recursively finds and counts all valid solutions."""
+        solutions = 0
+        
+        empty_cell = None
+        for r in range(9):
+            for c in range(9):
+                if board[r][c] == 0:
+                    empty_cell = (r, c)
+                    break
+            if empty_cell:
+                break
+        
+        if not empty_cell:
+            return 1
+
+        r, c = empty_cell
+        for num in range(1, 10):
+            if self.is_safe_for_solver(board, num, r, c):
+                board[r][c] = num
+                solutions += self.count_solutions(board)                
+                if solutions >= 2:
+                    board[r][c] = 0
+                    return 2
+            board[r][c] = 0                
+        return solutions
+
+    def generate_puzzle(self, empty_cells_count=45):
+        """generates a solvable Sudoku puzzle by filling and then removing cells."""
+        self.grid = [[0] * 9 for _ in range(9)]
+        self.fill_grid()
+        solved_board = [row[:] for row in self.grid]
+        
+        puzzle_board = [row[:] for row in solved_board]
+        
+        cells = [(r, c) for r in range(9) for c in range(9)]
+        random.shuffle(cells)
+
+        cells_removed = 0
+    
+        for r_rem, c_rem in cells:
+            if cells_removed >= empty_cells_count:
+                break
+            original_value = puzzle_board[r_rem][c_rem]
+            puzzle_board[r_rem][c_rem] = 0
+            temp_board = [row[:] for row in puzzle_board]
+
+        
+            if self.count_solutions(temp_board) != 1:
+                puzzle_board[r_rem][c_rem] = original_value
+            else:
+                cells_removed += 1
+            
+        return solved_board, puzzle_board
 
 def pick_image_file():
     root = tkinter.Tk()
@@ -77,41 +187,16 @@ def rehide_cell(row, col, overlay_surface):
 
 class SudokuGame:
     def __init__(self):
-        self.solved = [
-            [5, 3, 4, 6, 7, 8, 9, 1, 2],
-            [6, 7, 2, 1, 9, 5, 3, 4, 8],
-            [1, 9, 8, 3, 4, 2, 5, 6, 7],
-            [8, 5, 9, 7, 6, 1, 4, 2, 3],
-            [4, 2, 6, 8, 5, 3, 7, 9, 1],
-            [7, 1, 3, 9, 2, 4, 8, 5, 6],
-            [9, 6, 1, 5, 3, 7, 2, 8, 4],
-            [2, 8, 7, 4, 1, 9, 6, 3, 5],
-            [3, 4, 5, 2, 8, 6, 1, 7, 9]
-        ]
-
-        self.initial = [
-            [5, 3, 0, 0, 7, 0, 0, 0, 0],
-            [6, 0, 0, 1, 9, 5, 0, 0, 0],
-            [0, 9, 8, 0, 0, 0, 0, 6, 0],
-            [8, 0, 0, 0, 6, 0, 0, 0, 3],
-            [4, 0, 0, 8, 0, 3, 0, 0, 1],
-            [7, 0, 0, 0, 2, 0, 0, 0, 6],
-            [0, 6, 0, 0, 0, 0, 2, 8, 0],
-            [0, 0, 0, 4, 1, 9, 0, 0, 5],
-            [0, 0, 0, 0, 8, 0, 0, 7, 9]
-        ]
+        
+        # --- NEW: Generate a random board on startup ---
+        generator = SudokuGenerator()
+        self.solved, self.initial = generator.generate_puzzle(empty_cells_count=50)
+        # ---------------------------------------------
 
         self.current_board = [row[:] for row in self.initial]
         self.selected = None
         self.hovered = None
         self.all_solved = False
-    def is_solved(self):
-        """check if current board == solved board"""
-        for r in range(9):
-            for c in range(9):
-                if self.current_board[r][c] != self.solved[r][c]:
-                    return False
-        return True
     
 WIDTH = SUDOKU_GRID_SIZE
 HEIGHT = 600
