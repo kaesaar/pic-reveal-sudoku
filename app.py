@@ -55,17 +55,17 @@ class SudokuGenerator:
             for c in range(9):
                 if board[r][c] == 0:
                     for num in range(1, 10):
-                        if self.is_safe_for_solver(board, num, r, c): # Note: is_safe needs to accept board as an arg
+                        if self.is_safe_for_solver(board, num, r, c):
                             board[r][c] = num
-                        # Pruning: stop if two solutions found
+
                             if self.count_solutions(board, count) >= 2:
                                 return 2
                             board[r][c] = 0
-                    return count # Backtrack (crucial)
-    # If the loop completes, a solution has been found
+                    return count
+                
         return 1 if count == 0 else count + 1
 
-    def generate_puzzle(self, empty_cells_count=45):
+    def generate_puzzle(self, difficulty=0.5):
         """generates a solvable Sudoku puzzle by filling and then removing cells."""
         
         self.fill_grid()
@@ -76,10 +76,15 @@ class SudokuGenerator:
         cells = [(r, c) for r in range(9) for c in range(9)]
         random.shuffle(cells)
         
-        cells_to_remove = cells[:empty_cells_count]
+        puzzle_board = [row[:] for row in solved_board]
+    
+        for r_rem, c_rem in cells:
+            original_value = puzzle_board[r_rem][c_rem]
+            puzzle_board[r_rem][c_rem] = 0
         
-        for r, c in cells_to_remove:
-            puzzle_board[r][c] = 0
+            if self.count_solutions(puzzle_board, 0) != 1:
+                puzzle_board[r_rem][c_rem] = original_value
+                break
             
         return solved_board, puzzle_board
 
