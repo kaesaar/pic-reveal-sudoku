@@ -223,7 +223,18 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+        if event.type == pygame.MOUSEMOTION:
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_x, mouse_y = mouse_pos
             
+            if 0 <= mouse_x < SUDOKU_GRID_SIZE and 0 <= mouse_y < SUDOKU_GRID_SIZE:
+                col = mouse_x // CELL_SIZE
+                row = mouse_y // CELL_SIZE
+                game.hovered = (row, col)
+            else:
+                game.hovered = None
+        
         #stop input if solved
         if game.all_solved:
             continue
