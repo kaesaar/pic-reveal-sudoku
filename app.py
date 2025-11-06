@@ -164,7 +164,7 @@ def draw_grid(screen, game, overlay_surface):
                 same_num_surface.fill(SAME_NUM_HIGHLIGHT)
                 same_num_surface.set_alpha(150) # for better visibility
                 screen.blit(same_num_surface, (rect_x, rect_y))
-                
+
             if num != 0:
                 color = NUM_COLOR if game.initial[r][c] != 0 else USER_NUM_COLOR
 
@@ -175,7 +175,7 @@ def draw_grid(screen, game, overlay_surface):
                 y = r * CELL_SIZE + (CELL_SIZE - text.get_height()) // 2
                 screen.blit(text, (x, y))
 
-    if game.selected:
+    if game.selected and not game.all_solved:
         r, c = game.selected
 
         rect_x = c * CELL_SIZE
@@ -195,6 +195,8 @@ def draw_grid(screen, game, overlay_surface):
 
         # vertical lines
         pygame.draw.line(screen, LINE_COLOR, (i * CELL_SIZE, 0), (i * CELL_SIZE, SUDOKU_GRID_SIZE), thickness)
+
+SudokuGame.is_solved = lambda self: all(self.current_board[r][c] == self.solved[r][c] for r in range(9) for c in range(9))
 
 running = True
 
@@ -261,6 +263,10 @@ while running:
                 elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_DELETE:
                     game.current_board[r][c] = 0
                     rehide_cell(r, c, overlay_surface)
+
+    screen.fill(WHITE)
+
+    if sudoku_background_image and overlay_surface:
 
         screen.blit(sudoku_background_image, (0,0))
 
