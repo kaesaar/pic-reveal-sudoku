@@ -25,11 +25,14 @@ LINE_COLOR = (0, 0, 0)
 NUM_COLOR = (50, 50, 50)
 USER_NUM_COLOR = (0, 0, 255)
 HIGHLIGHT_COLOR = (255, 255, 0)
+
+HOVER_LINE_COLOR = (180, 200, 255) # light blue
+SAME_NUM_HIGHLIGHT = (255, 200, 100) # yellow
+
 FONT = pygame.font.SysFont("arial", 40)
 
 WHITE = (255, 255, 255)
 OVERLAY_COLOR = (255, 255, 255)
-
 
 def process_image(file_path, target_size=SUDOKU_GRID_SIZE):
     try:
@@ -54,12 +57,14 @@ def reveal_cell(row, col, overlay_surface):
 
     transparent_hole = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
     transparent_hole.fill((0, 0, 0, 0))
+    
     rect_x = col * CELL_SIZE
     rect_y = row * CELL_SIZE
 
     overlay_surface.blit(transparent_hole, (rect_x, rect_y), special_flags=pygame.BLEND_RGBA_MULT)
 
 def rehide_cell(row, col, overlay_surface):
+    """re-cover a revealed cell by blitting a patch over it"""
     opaque_patch = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
     opaque_patch.fill(OVERLAY_COLOR + (240,))
 
@@ -68,6 +73,8 @@ def rehide_cell(row, col, overlay_surface):
 
     opaque_patch.set_alpha(240)
     overlay_surface.blit(opaque_patch, (rect_x, rect_y))
+
+
 class SudokuGame:
     def __init__(self):
         self.solved = [
@@ -96,6 +103,7 @@ class SudokuGame:
 
         self.current_board = [row[:] for row in self.initial]
         self.selected = None
+        self.hovered = None
         self.all_solved = False
     def is_solved(self):
         """check if current board == solved board"""
@@ -118,14 +126,45 @@ def draw_grid(screen, game, overlay_surface):
     if not game.all_solved:
         game.all_solved = game.is_solved()
 
+    temp_guide_surface = pygame.Surface((SUDOKU_GRID_SIZE, SUDOKU_GRID_SIZE), pygame.SRCALPHA)
+    
+    if game.hovered and not game.all_solved:
+        r, c = game.hovered
+        
+        # row highlight
+        row_rect = pygame.Rect(0, r * CELL_SIZE, SUDOKU_GRID_SIZE, CELL_SIZE)
+        pygame.draw.rect(temp_guide_surface, HOVER_LINE_COLOR + (100,), row_rect, 0)
+        
+        # column highlight
+        col_rect = pygame.Rect(c * CELL_SIZE, 0, CELL_SIZE, SUDOKU_GRID_SIZE)
+        pygame.draw.rect(temp_guide_surface, HOVER_LINE_COLOR + (100,), col_rect, 0)
+
     if game.all_solved:
         for r in range(9):
             for c in range(9):
                 reveal_cell(r, c, overlay_surface)
     screen.blit(overlay_surface, (0, 0))
+
+    screen.blit(temp_guide_surface, (0, 0))
+
+    # selected number global highlighter
+    highlight_value = None
+    if game.selected:
+        r_sel, c_sel = game.selected
+        highlight_value = game.current_board[r_sel][c_sel]
+
     for r in range(9):
         for c in range(9):
             num = game.current_board[r][c]
+
+            if num != 0 and num == highlight_value and not game.all_solved:
+                rect_x = c * CELL_SIZE
+                rect_y = r * CELL_SIZE
+                same_num_surface = pygame.Surface((CELL_SIZE, CELL_SIZE))
+                same_num_surface.fill(SAME_NUM_HIGHLIGHT)
+                same_num_surface.set_alpha(150) # for better visibility
+                screen.blit(same_num_surface, (rect_x, rect_y))
+
             if num != 0:
                 color = NUM_COLOR if game.initial[r][c] != 0 else USER_NUM_COLOR
 
@@ -136,7 +175,7 @@ def draw_grid(screen, game, overlay_surface):
                 y = r * CELL_SIZE + (CELL_SIZE - text.get_height()) // 2
                 screen.blit(text, (x, y))
 
-    if game.selected:
+    if game.selected and not game.all_solved:
         r, c = game.selected
 
         rect_x = c * CELL_SIZE
@@ -156,6 +195,8 @@ def draw_grid(screen, game, overlay_surface):
 
         # vertical lines
         pygame.draw.line(screen, LINE_COLOR, (i * CELL_SIZE, 0), (i * CELL_SIZE, SUDOKU_GRID_SIZE), thickness)
+
+SudokuGame.is_solved = lambda self: all(self.current_board[r][c] == self.solved[r][c] for r in range(9) for c in range(9))
 
 running = True
 
@@ -182,7 +223,18 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+        if event.type == pygame.MOUSEMOTION:
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_x, mouse_y = mouse_pos
             
+            if 0 <= mouse_x < SUDOKU_GRID_SIZE and 0 <= mouse_y < SUDOKU_GRID_SIZE:
+                col = mouse_x // CELL_SIZE
+                row = mouse_y // CELL_SIZE
+                game.hovered = (row, col)
+            else:
+                game.hovered = None
+        
         #stop input if solved
         if game.all_solved:
             continue
@@ -222,6 +274,10 @@ while running:
                 elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_DELETE:
                     game.current_board[r][c] = 0
                     rehide_cell(r, c, overlay_surface)
+
+    screen.fill(WHITE)
+
+    if sudoku_background_image and overlay_surface:
 
         screen.blit(sudoku_background_image, (0,0))
 
