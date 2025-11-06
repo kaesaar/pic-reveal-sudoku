@@ -197,13 +197,6 @@ class SudokuGame:
         self.selected = None
         self.hovered = None
         self.all_solved = False
-    def is_solved(self):
-        """check if current board == solved board"""
-        for r in range(9):
-            for c in range(9):
-                if self.current_board[r][c] != self.solved[r][c]:
-                    return False
-        return True
     
 WIDTH = SUDOKU_GRID_SIZE
 HEIGHT = 600
